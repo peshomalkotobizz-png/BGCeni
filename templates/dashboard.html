@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Табло — ЦениBG</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root{--bg:#0a0a0f;--surface:#12121a;--card:#1a1a26;--border:#2a2a3d;--accent:#e8ff00;--text:#f0f0f8;--muted:#6b6b8a}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+  /* SIDEBAR */
+  .sb{width:220px;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;z-index:50}
+  .sb-logo{font-family:'Unbounded',sans-serif;font-weight:900;color:var(--accent);font-size:1.1rem;margin-bottom:2rem;text-decoration:none;display:block}
+  .sb-logo span{color:var(--text)}
+  .sb-nav{display:flex;flex-direction:column;gap:.3rem;flex:1}
+  .sb-lnk{display:flex;align-items:center;gap:.7rem;padding:.65rem .8rem;border-radius:8px;font-size:.85rem;color:var(--muted);cursor:pointer;transition:all .2s;text-decoration:none;border:none;background:none;width:100%;text-align:left}
+  .sb-lnk:hover,.sb-lnk.active{background:rgba(232,255,0,.08);color:var(--accent)}
+  .sb-lnk.active{font-weight:600}
+  .sb-plan{margin-top:auto;background:rgba(232,255,0,.06);border:1px solid rgba(232,255,0,.2);border-radius:10px;padding:1rem;text-align:center}
+  .sb-plan-lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+  .sb-plan-name{font-weight:700;color:var(--accent);font-size:.9rem;margin-bottom:.6rem}
+  .sb-plan-btn{display:block;background:var(--accent);color:#000;font-weight:700;font-size:.8rem;padding:.5rem;border-radius:6px;text-decoration:none;transition:opacity .2s}
+  .sb-plan-btn:hover{opacity:.85}
+
+  /* MAIN */
+  .main{margin-left:220px;flex:1;padding:2rem;min-height:100vh}
+
+  /* TOPBAR */
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem}
+  .page-title{font-family:'Unbounded',sans-serif;font-weight:700;font-size:1.2rem}
+  .user-info{display:flex;align-items:center;gap:.8rem}
+  .user-plan{padding:.3rem .8rem;border-radius:100px;font-size:.75rem;font-weight:700}
+  .plan-free{background:rgba(107,107,138,.15);color:var(--muted);border:1px solid rgba(107,107,138,.3)}
+  .plan-premium{background:rgba(232,255,0,.12);color:var(--accent);border:1px solid rgba(232,255,0,.3)}
+  .logout-btn{color:var(--muted);text-decoration:none;font-size:.85rem;padding:.4rem .8rem;border:1px solid var(--border);border-radius:6px;transition:all .2s}
+  .logout-btn:hover{border-color:var(--muted);color:var(--text)}
+
+  /* SEARCH */
+  .search-row{display:flex;gap:.7rem;margin-bottom:1.5rem;flex-wrap:wrap}
+  .s-inp{flex:1;min-width:200px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s}
+  .s-inp:focus{border-color:var(--accent)}
+  .s-inp::placeholder{color:var(--muted)}
+  .s-btn{background:var(--accent);color:#000;border:none;border-radius:8px;padding:.75rem 1.3rem;font-weight:700;font-size:.9rem;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .2s;white-space:nowrap}
+  .s-btn:hover{opacity:.85}
+  .filter-btns{display:flex;gap:.5rem;flex-wrap:wrap}
+  .f-btn{padding:.4rem .9rem;border-radius:6px;font-size:.8rem;cursor:pointer;border:1px solid var(--border);background:none;color:var(--muted);font-family:'Inter',sans-serif;transition:all .2s}
+  .f-btn:hover,.f-btn.active{background:rgba(232,255,0,.08);color:var(--accent);border-color:rgba(232,255,0,.3)}
+
+  /* PRODUCT CARDS */
+  .grid{display:flex;flex-direction:column;gap:.7rem}
+  .pc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;transition:border-color .2s;position:relative;overflow:hidden}
+  .pc.drop{border-color:rgba(76,255,110,.4);background:rgba(76,255,110,.03)}
+  .pc-em{font-size:1.8rem;flex-shrink:0}
+  .pc-info{flex:1;min-width:0}
+  .pc-name{font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.2rem}
+  .pc-store{display:inline-flex;align-items:center;gap:.3rem;font-size:.72rem;color:var(--muted)}
+  .store-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  .pc-price{text-align:right;flex-shrink:0}
+  .cur-p{font-family:'Unbounded',sans-serif;font-weight:700;font-size:1rem;line-height:1}
+  .pdiff{font-size:.75rem;margin-top:.2rem}
+  .pd{color:#4cff6e}.pu{color:#ff6b6b}.ps{color:var(--muted)}
+  .wl-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:.4rem .7rem;cursor:pointer;font-size:.85rem;transition:all .2s;flex-shrink:0}
+  .wl-btn:hover,.wl-btn.added{border-color:var(--accent);color:var(--accent);background:rgba(232,255,0,.08)}
+  .chart-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:.4rem .6rem;cursor:pointer;font-size:.8rem;transition:all .2s;flex-shrink:0}
+  .chart-btn:hover{border-color:var(--muted);color:var(--text)}
+  .badge-drop{position:absolute;top:.6rem;right:4.5rem;background:var(--accent);color:#000;font-size:.62rem;font-weight:700;padding:.12rem .45rem;border-radius:4px}
+
+  /* SECTIONS */
+  .sec-title{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between}
+  .wl-count{background:var(--accent);color:#000;font-size:.7rem;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .divider{border:none;border-top:1px solid var(--border);margin:2rem 0}
+
+  /* UPGRADE BANNER */
+  .upgrade-banner{background:linear-gradient(135deg,rgba(232,255,0,.08),rgba(232,255,0,.03));border:1px solid rgba(232,255,0,.25);border-radius:12px;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.5rem}
+  .ub-text{font-size:.9rem}
+  .ub-text strong{color:var(--accent)}
+  .ub-btn{background:var(--accent);color:#000;font-weight:700;font-size:.85rem;padding:.55rem 1.2rem;border-radius:8px;text-decoration:none;white-space:nowrap;transition:opacity .2s;flex-shrink:0}
+  .ub-btn:hover{opacity:.85}
+
+  /* MODAL (chart) */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2rem;max-width:600px;width:100%}
+  .modal-title{font-family:'Unbounded',sans-serif;font-weight:700;font-size:1rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center}
+  .modal-close{background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer;transition:color .2s}
+  .modal-close:hover{color:var(--text)}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:2rem;right:2rem;background:var(--card);border:1px solid rgba(232,255,0,.4);border-radius:12px;padding:1rem 1.5rem;display:flex;align-items:center;gap:.8rem;font-size:.9rem;z-index:300;transform:translateY(120px);opacity:0;transition:all .4s cubic-bezier(.34,1.56,.64,1);max-width:340px}
+  .toast.show{transform:translateY(0);opacity:1}
+  .t-ico{font-size:1.3rem}
+  .t-title{font-weight:600;color:var(--accent);font-size:.85rem}
+  .t-body{color:var(--muted);font-size:.8rem;margin-top:.1rem}
+
+  /* SETTINGS */
+  #settingsPanel{display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+  .settings-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+  .settings-label{font-size:.9rem;color:var(--muted);min-width:160px}
+  select{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.5rem 1rem;color:var(--text);font-family:'Inter',sans-serif;outline:none;cursor:pointer}
+  select:focus{border-color:var(--accent)}
+
+  @media(max-width:768px){.sb{display:none}.main{margin-left:0}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sb">
+  <a href="/" class="sb-logo">Цени<span>BG</span></a>
+  <nav class="sb-nav">
+    <button class="sb-lnk active" onclick="showTab('search')">📊 Търсене</button>
+    <button class="sb-lnk" onclick="showTab('wishlist')">⭐ Wishlist</button>
+    <button class="sb-lnk" onclick="showTab('settings')">⚙️ Настройки</button>
+    <a href="/api/scrape-now" class="sb-lnk" target="_blank">🔄 Обнови цени</a>
+  </nav>
+  <div class="sb-plan">
+    <div class="sb-plan-lbl">Твоят план</div>
+    <div class="sb-plan-name">{{ '⭐ Premium' if user.plan == 'premium' else '🆓 Безплатен' }}</div>
+    {% if user.plan != 'premium' %}
+    <a href="/upgrade" class="sb-plan-btn">Обнови → 4 лв./мес.</a>
+    {% endif %}
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="page-title">Здравей, {{ user.name or user.email.split('@')[0] }} 👋</div>
+    <div class="user-info">
+      <span class="user-plan {{ 'plan-premium' if user.plan == 'premium' else 'plan-free' }}">
+        {{ 'PREMIUM' if user.plan == 'premium' else 'БЕЗПЛАТЕН' }}
+      </span>
+      <a href="/logout" class="logout-btn">Изход</a>
+    </div>
+  </div>
+
+  {% if user.plan == 'free' %}
+  <div class="upgrade-banner">
+    <div class="ub-text">Безплатният план позволява <strong>до 5 продукта</strong>. Обнови до Premium за неограничени следения.</div>
+    <a href="/upgrade" class="ub-btn">Обнови → 4 лв./мес.</a>
+  </div>
+  {% endif %}
+
+  <!-- SETTINGS PANEL -->
+  <div id="settingsPanel">
+    <div class="sec-title">Настройки за нотификации</div>
+    <div class="settings-row">
+      <span class="settings-label">Праг за известяване:</span>
+      <select id="thresholdSel" onchange="saveSettings()">
+        <option value="5" {% if user.alert_threshold == 5 %}selected{% endif %}>При -5% намаление</option>
+        <option value="10" {% if user.alert_threshold == 10 %}selected{% endif %}>При -10% намаление</option>
+        <option value="15" {% if user.alert_threshold == 15 %}selected{% endif %}>При -15% намаление</option>
+        <option value="20" {% if user.alert_threshold == 20 %}selected{% endif %}>При -20% намаление</option>
+      </select>
+    </div>
+    <div style="color:var(--muted);font-size:.85rem">Имейл: <strong style="color:var(--text)">{{ user.email }}</strong></div>
+  </div>
+
+  <!-- TAB: SEARCH -->
+  <div id="tab-search">
+    <div class="sec-title">Намери и следи продукти</div>
+    <div class="search-row">
+      <input class="s-inp" id="searchQ" placeholder="напр. мляко, масло, прах за пране..." oninput="search()">
+      <button class="s-btn" onclick="search()">🔍 Търси</button>
+    </div>
+    <div class="filter-btns" style="margin-bottom:1rem">
+      <button class="f-btn active" onclick="setStore('all',this)">Всички</button>
+      <button class="f-btn" onclick="setStore('Lidl',this)">🔵 Lidl</button>
+      <button class="f-btn" onclick="setStore('Kaufland',this)">🔴 Kaufland</button>
+      <button class="f-btn" onclick="setStore('Billa',this)">🔴 Billa</button>
+    </div>
+    <div class="grid" id="searchGrid">
+      <div style="color:var(--muted);padding:2rem;text-align:center">Напиши продукт в полето за търсене...</div>
+    </div>
+  </div>
+
+  <!-- TAB: WISHLIST -->
+  <div id="tab-wishlist" style="display:none">
+    <div class="sec-title">
+      <span>⭐ Моят Wishlist</span>
+      <div class="wl-count" id="wlCount">{{ wishlist|length }}</div>
+    </div>
+    <div class="grid" id="wishlistGrid">
+      {% if wishlist %}
+        {% for p in wishlist %}
+        <div class="pc {{ 'drop' if p.current_price < p.prev_price else '' }}" id="wpc-{{p.id}}">
+          {% if p.current_price < p.prev_price %}
+          <div class="badge-drop">ПАДА ▼</div>
+          {% endif %}
+          <div class="pc-em">{{ p.emoji }}</div>
+          <div class="pc-info">
+            <div class="pc-name">{{ p.name }}</div>
+            <div class="pc-store">
+              <div class="store-dot" style="background:{{ '#4da3ff' if p.store=='Lidl' else '#ff6b6b' if p.store=='Kaufland' else '#ff8080' }}"></div>
+              {{ p.store }}
+            </div>
+          </div>
+          <div class="pc-price">
+            <div class="cur-p">{{ '%.2f'|format(p.current_price) }} лв.</div>
+            {% set pct = ((1 - p.current_price/p.prev_price)*100)|int if p.prev_price > 0 else 0 %}
+            {% if p.current_price < p.prev_price %}
+            <div class="pdiff pd">▼ -{{ pct }}%</div>
+            {% elif p.current_price > p.prev_price %}
+            <div class="pdiff pu">▲ +{{ pct|abs }}%</div>
+            {% else %}
+            <div class="pdiff ps">без промяна</div>
+            {% endif %}
+          </div>
+          <button class="chart-btn" onclick="showChart({{p.id}},'{{p.name}}')">📈</button>
+          <button class="wl-btn added" onclick="removeFromWishlist({{p.id}},this)">★ Премахни</button>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="color:var(--muted);padding:2rem;text-align:center">Нямаш продукти в Wishlist. Добави от секция "Търсене".</div>
+      {% endif %}
+    </div>
+  </div>
+
+</main>
+
+<!-- CHART MODAL -->
+<div class="modal-bg" id="chartModal" onclick="if(event.target===this)closeChart()">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="chartTitle">История на цената</span>
+      <button class="modal-close" onclick="closeChart()">×</button>
+    </div>
+    <canvas id="priceChart" height="250"></canvas>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="t-ico">⭐</div>
+  <div>
+    <div class="t-title" id="toastTitle">Добавено!</div>
+    <div class="t-body" id="toastBody">Ще те уведомим при намаление.</div>
+  </div>
+</div>
+
+<script>
+let currentStore = 'all';
+let chartInst = null;
+const wishlistIds = new Set({{ (wishlist | map(attribute='id') | list) | tojson }});
+
+// ── Tabs ──────────────────────────────────────────────────
+function showTab(name) {
+  ['search','wishlist','settings'].forEach(t => {
+    document.getElementById('tab-'+t) && (document.getElementById('tab-'+t).style.display = 'none');
+  });
+  document.getElementById('settingsPanel').style.display = name === 'settings' ? 'block' : 'none';
+  if (name !== 'settings') document.getElementById('tab-'+name).style.display = 'block';
+  document.querySelectorAll('.sb-lnk').forEach(l => l.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ── Search ────────────────────────────────────────────────
+function setStore(s, btn) {
+  currentStore = s;
+  document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  search();
+}
+
+async function search() {
+  const q = document.getElementById('searchQ').value.trim();
+  const res = await fetch(`/api/products/search?q=${encodeURIComponent(q)}&store=${currentStore}`);
+  const products = await res.json();
+  const grid = document.getElementById('searchGrid');
+
+  if (!products.length) {
+    grid.innerHTML = '<div style="color:var(--muted);padding:1.5rem;text-align:center">Няма намерени продукти.</div>';
+    return;
+  }
+  grid.innerHTML = products.map(p => renderCard(p)).join('');
+}
+
+function renderCard(p) {
+  const diff = p.prev_price > 0 ? ((1 - p.current_price/p.prev_price)*100) : 0;
+  const diffHtml = diff > 0.5
+    ? `<div class="pdiff pd">▼ -${Math.round(diff)}%</div>`
+    : diff < -0.5
+    ? `<div class="pdiff pu">▲ +${Math.round(Math.abs(diff))}%</div>`
+    : `<div class="pdiff ps">без промяна</div>`;
+  const inWL = wishlistIds.has(p.id);
+  const dotColor = p.store==='Lidl' ? '#4da3ff' : p.store==='Kaufland' ? '#ff6b6b' : '#ff8080';
+  const dropped = diff > 0.5 ? 'drop' : '';
+  const badge = diff > 0.5 ? '<div class="badge-drop">ПАДА ▼</div>' : '';
+  return `
+    <div class="pc ${dropped}" id="pc-${p.id}">
+      ${badge}
+      <div class="pc-em">${p.emoji}</div>
+      <div class="pc-info">
+        <div class="pc-name">${p.name}</div>
+        <div class="pc-store"><div class="store-dot" style="background:${dotColor}"></div>${p.store}</div>
+      </div>
+      <div class="pc-price">
+        <div class="cur-p">${p.current_price.toFixed(2)} лв.</div>
+        ${diffHtml}
+      </div>
+      <button class="chart-btn" onclick="showChart(${p.id},'${p.name.replace(/'/g,'\\\'')}')" title="Виж история">📈</button>
+      <button class="wl-btn ${inWL?'added':''}" onclick="toggleWL(${p.id},'${p.name.replace(/'/g,'\\\'').substring(0,20)}',this)">
+        ${inWL ? '★' : '+'}
+      </button>
+    </div>`;
+}
+
+// ── Wishlist ──────────────────────────────────────────────
+async function toggleWL(id, name, btn) {
+  if (wishlistIds.has(id)) {
+    await removeFromWishlist(id, btn);
+  } else {
+    const res = await fetch('/api/wishlist/add', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({product_id: id})
+    });
+    const d = await res.json();
+    if (d.success) {
+      wishlistIds.add(id);
+      btn.textContent = '★';
+      btn.classList.add('added');
+      showToast('Добавено! ⭐', `"${name}" — уведомяваме при намаление`);
+    } else if (d.upgrade) {
+      showToast('Лимит достигнат', 'Обнови до Premium за повече продукти', true);
+    } else {
+      alert(d.error);
+    }
+  }
+}
+
+async function removeFromWishlist(id, btn) {
+  await fetch('/api/wishlist/remove', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({product_id: id})
+  });
+  wishlistIds.delete(id);
+  if (btn) { btn.textContent = '+'; btn.classList.remove('added'); }
+  const wpc = document.getElementById('wpc-'+id);
+  if (wpc) { wpc.style.opacity='0'; wpc.style.transform='translateX(20px)'; setTimeout(()=>wpc.remove(),300); }
+  const cnt = document.getElementById('wlCount');
+  if (cnt) cnt.textContent = Math.max(0, parseInt(cnt.textContent)-1);
+}
+
+// ── Chart ─────────────────────────────────────────────────
+async function showChart(id, name) {
+  const res = await fetch(`/api/price-history/${id}`);
+  const data = await res.json();
+  document.getElementById('chartTitle').textContent = name;
+  document.getElementById('chartModal').classList.add('open');
+  if (chartInst) chartInst.destroy();
+  const ctx = document.getElementById('priceChart').getContext('2d');
+  chartInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map(d => d.date),
+      datasets: [{
+        label: 'Цена (лв.)',
+        data: data.map(d => d.price),
+        borderColor: '#e8ff00',
+        backgroundColor: 'rgba(232,255,0,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#e8ff00',
+        pointRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#6b6b8a' }, grid: { color: '#2a2a3d' } },
+        y: { ticks: { color: '#6b6b8a', callback: v => v.toFixed(2)+' лв.' }, grid: { color: '#2a2a3d' } }
+      }
+    }
+  });
+}
+
+function closeChart() {
+  document.getElementById('chartModal').classList.remove('open');
+  if (chartInst) { chartInst.destroy(); chartInst = null; }
+}
+
+// ── Settings ──────────────────────────────────────────────
+async function saveSettings() {
+  const threshold = document.getElementById('thresholdSel').value;
+  await fetch('/api/settings', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({threshold})
+  });
+  showToast('Запазено', `Ще те уведомяваме при -${threshold}% намаление`);
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(title, body, isWarning=false) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastBody').textContent = body;
+  t.style.borderColor = isWarning ? 'rgba(255,77,0,.5)' : 'rgba(232,255,0,.4)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// Init — load all products
+search();
+</script>
+</body>
+</html>

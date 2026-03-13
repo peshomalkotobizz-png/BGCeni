@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium — ЦениBG</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0a0f;--card:#1a1a26;--border:#2a2a3d;--accent:#e8ff00;--text:#f0f0f8;--muted:#6b6b8a}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+  .page{max-width:500px;width:100%;text-align:center}
+  .logo{font-family:'Unbounded',sans-serif;font-weight:900;color:var(--accent);font-size:1.3rem;text-decoration:none;display:block;margin-bottom:3rem}
+  .logo span{color:var(--text)}
+  h1{font-family:'Unbounded',sans-serif;font-weight:900;font-size:2rem;line-height:1.2;margin-bottom:1rem}
+  .price-display{margin:2rem 0;padding:2rem;background:linear-gradient(135deg,rgba(232,255,0,.08),rgba(232,255,0,.02));border:1px solid rgba(232,255,0,.3);border-radius:16px}
+  .pd-amount{font-family:'Unbounded',sans-serif;font-size:3.5rem;font-weight:900;color:var(--accent);line-height:1}
+  .pd-period{color:var(--muted);margin-top:.3rem;font-size:.9rem}
+  .pd-trial{color:#4cff6e;font-size:.85rem;margin-top:.5rem;font-weight:600}
+  .features{text-align:left;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1.5rem 0}
+  .feat{display:flex;align-items:center;gap:.7rem;padding:.6rem 0;font-size:.9rem;color:var(--muted);border-bottom:1px solid var(--border)}
+  .feat:last-child{border-bottom:none}
+  .feat span{color:var(--accent);font-weight:700;flex-shrink:0}
+  .stripe-btn{width:100%;padding:1.1rem;background:var(--accent);color:#000;font-weight:700;font-size:1rem;border:none;border-radius:10px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;margin-bottom:1rem}
+  .stripe-btn:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 8px 25px rgba(232,255,0,.3)}
+  .stripe-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .safe{color:var(--muted);font-size:.8rem;display:flex;align-items:center;justify-content:center;gap:.4rem}
+  .back{display:block;margin-top:1.5rem;color:var(--muted);text-decoration:none;font-size:.9rem}
+  .back:hover{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="page">
+  <a href="/" class="logo">Цени<span>BG</span></a>
+  <h1>ЦениBG Premium</h1>
+  <p style="color:var(--muted);line-height:1.7">Неограничени продукти, по-честа проверка и пълна история на цените.</p>
+
+  <div class="price-display">
+    <div class="pd-amount">4 <span style="font-size:1.5rem">лв.</span></div>
+    <div class="pd-period">на месец, отменяем по всяко време</div>
+    <div class="pd-trial">✓ Първите 30 дни са безплатни</div>
+  </div>
+
+  <div class="features">
+    <div class="feat"><span>✓</span> Неограничени продукти в Wishlist</div>
+    <div class="feat"><span>✓</span> Праг по избор — 5%, 10%, 15%, 20%</div>
+    <div class="feat"><span>✓</span> Проверка на цени на 6 часа</div>
+    <div class="feat"><span>✓</span> История на цените за 1 година</div>
+    <div class="feat"><span>✓</span> Графики за всеки продукт</div>
+    <div class="feat"><span>✓</span> Приоритетна поддръжка</div>
+  </div>
+
+  <button class="stripe-btn" id="checkoutBtn" onclick="startCheckout()">
+    🔒 Абонирай се чрез Stripe →
+  </button>
+  <div class="safe">🔐 Плащането се обработва сигурно от Stripe. Без запазване на карта в нашата система.</div>
+  <a href="/dashboard" class="back">← Обратно към таблото</a>
+</div>
+
+<script>
+async function startCheckout() {
+  const btn = document.getElementById('checkoutBtn');
+  btn.disabled = true;
+  btn.textContent = 'Пренасочване към Stripe...';
+
+  const res = await fetch('/create-checkout-session', {method:'POST'});
+  const data = await res.json();
+
+  if (data.url) {
+    window.location.href = data.url;
+  } else {
+    alert('Грешка: ' + (data.error || 'Неизвестна грешка'));
+    btn.disabled = false;
+    btn.textContent = '🔒 Абонирай се чрез Stripe →';
+  }
+}
+</script>
+</body>
+</html>

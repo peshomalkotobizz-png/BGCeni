@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Успешно! — ЦениBG</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0a0f;--card:#1a1a26;--border:#2a2a3d;--accent:#e8ff00;--text:#f0f0f8;--muted:#6b6b8a}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:2rem}
+  .icon{font-size:4rem;margin-bottom:1.5rem;animation:pop .5s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+  h1{font-family:'Unbounded',sans-serif;font-weight:900;font-size:2rem;color:var(--accent);margin-bottom:1rem}
+  p{color:var(--muted);line-height:1.8;max-width:400px;margin:0 auto 2rem}
+  a{display:inline-block;background:var(--accent);color:#000;font-weight:700;padding:1rem 2.5rem;border-radius:10px;text-decoration:none;transition:opacity .2s}
+  a:hover{opacity:.85}
+</style>
+</head>
+<body>
+<div>
+  <div class="icon">🎉</div>
+  <h1>Добре дошъл в Premium!</h1>
+  <p>Абонаментът ти е активен. Вече следиш неограничен брой продукти и получаваш проверка на 6 часа.</p>
+  <a href="/dashboard">Към таблото →</a>
+</div>
+</body>
+</html>

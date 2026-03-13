@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — ЦениBG</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0a0f;--surface:#12121a;--card:#1a1a26;--border:#2a2a3d;--accent:#e8ff00;--text:#f0f0f8;--muted:#6b6b8a}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);padding:2rem;max-width:1200px;margin:0 auto}
+  h1{font-family:'Unbounded',sans-serif;font-weight:900;color:var(--accent);font-size:1.5rem;margin-bottom:2rem}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:3rem}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem}
+  .stat-n{font-family:'Unbounded',sans-serif;font-size:2rem;font-weight:900;color:var(--accent);margin-bottom:.3rem}
+  .stat-l{color:var(--muted);font-size:.85rem}
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden}
+  th{background:var(--surface);padding:.8rem 1rem;text-align:left;font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  td{padding:.8rem 1rem;border-bottom:1px solid var(--border);font-size:.88rem}
+  tr:last-child td{border-bottom:none}
+  .badge{padding:.2rem .7rem;border-radius:100px;font-size:.72rem;font-weight:700}
+  .free{background:rgba(107,107,138,.15);color:var(--muted)}
+  .premium{background:rgba(232,255,0,.12);color:var(--accent)}
+  .btn-sm{padding:.4rem .9rem;border-radius:6px;font-size:.8rem;cursor:pointer;border:1px solid var(--border);background:none;color:var(--muted);font-family:'Inter',sans-serif;transition:all .2s}
+  .btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-scrape{background:var(--accent);color:#000;font-weight:700;padding:.7rem 1.5rem;border-radius:8px;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .2s}
+  .btn-scrape:hover{opacity:.85}
+  h2{font-family:'Unbounded',sans-serif;font-weight:700;font-size:1rem;margin-bottom:1rem;margin-top:2rem}
+  .log{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;font-family:monospace;font-size:.8rem;color:var(--muted);max-height:200px;overflow-y:auto;margin-top:1rem}
+</style>
+</head>
+<body>
+<h1>⚙️ Admin панел — ЦениBG</h1>
+
+<div class="grid">
+  <div class="stat">
+    <div class="stat-n" id="totalUsers">...</div>
+    <div class="stat-l">Общо потребители</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n" id="premiumUsers">...</div>
+    <div class="stat-l">Premium абонати</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n" id="totalProducts">...</div>
+    <div class="stat-l">Продукта в база</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n" id="revenue">...</div>
+    <div class="stat-l">Приход/мес (лв.)</div>
+  </div>
+</div>
+
+<div style="display:flex;gap:1rem;align-items:center;margin-bottom:2rem">
+  <button class="btn-scrape" onclick="triggerScrape()">🔄 Стартирай Scraping сега</button>
+  <span id="scrapeStatus" style="color:var(--muted);font-size:.9rem"></span>
+</div>
+
+<h2>Последни потребители</h2>
+<table>
+  <thead><tr><th>Имейл</th><th>План</th><th>Wishlist</th><th>Регистриран</th><th></th></tr></thead>
+  <tbody id="usersTable"><tr><td colspan="5" style="color:var(--muted);text-align:center;padding:2rem">Зареждане...</td></tr></tbody>
+</table>
+
+<h2>Последни цени (по магазин)</h2>
+<table>
+  <thead><tr><th>Продукт</th><th>Магазин</th><th>Цена</th><th>Последно обновен</th></tr></thead>
+  <tbody id="productsTable"><tr><td colspan="4" style="color:var(--muted);text-align:center;padding:2rem">Зареждане...</td></tr></tbody>
+</table>
+
+<div class="log" id="logArea">// Лог ще се появи тук след scraping...</div>
+
+<script>
+async function loadStats() {
+  const r = await fetch('/api/admin/stats');
+  if (!r.ok) { document.body.innerHTML += '<p style="color:red">Admin достъп отказан. Влез в профила си.</p>'; return; }
+  const d = await r.json();
+  document.getElementById('totalUsers').textContent = d.total_users;
+  document.getElementById('premiumUsers').textContent = d.premium_users;
+  document.getElementById('totalProducts').textContent = d.total_products;
+  document.getElementById('revenue').textContent = (d.premium_users * 4).toFixed(0);
+
+  document.getElementById('usersTable').innerHTML = d.users.map(u => `
+    <tr>
+      <td>${u.email}</td>
+      <td><span class="badge ${u.plan}">${u.plan.toUpperCase()}</span></td>
+      <td>${u.wishlist_count}</td>
+      <td>${u.created_at}</td>
+      <td><button class="btn-sm" onclick="sendTestEmail('${u.email}')">📧 Тест</button></td>
+    </tr>`).join('');
+
+  document.getElementById('productsTable').innerHTML = d.products.map(p => `
+    <tr>
+      <td>${p.emoji} ${p.name}</td>
+      <td>${p.store}</td>
+      <td>${p.current_price?.toFixed(2)} лв.</td>
+      <td>${p.last_scraped || 'Никога'}</td>
+    </tr>`).join('');
+}
+
+async function triggerScrape() {
+  document.getElementById('scrapeStatus').textContent = '⏳ Стартиран...';
+  document.getElementById('logArea').textContent = '// Scraping стартиран в background...\n// Ще отнеме 2-5 минути.\n// Опресни страницата след приключване.';
+  const r = await fetch('/api/scrape-now');
+  const d = await r.json();
+  document.getElementById('scrapeStatus').textContent = '✓ ' + d.message;
+}
+
+async function sendTestEmail(email) {
+  const r = await fetch('/api/admin/test-email', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({email})
+  });
+  const d = await r.json();
+  alert(d.success ? '✓ Тестов имейл изпратен!' : '✗ Грешка: ' + d.error);
+}
+
+loadStats();
+</script>
+</body>
+</html>

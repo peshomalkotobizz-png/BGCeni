@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Регистрация — ЦениBG</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0a0f;--card:#1a1a26;--border:#2a2a3d;--accent:#e8ff00;--text:#f0f0f8;--muted:#6b6b8a}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+  .box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:3rem;max-width:440px;width:100%}
+  .logo{font-family:'Unbounded',sans-serif;font-weight:900;color:var(--accent);font-size:1.3rem;text-decoration:none;display:block;margin-bottom:2rem;text-align:center}
+  .logo span{color:var(--text)}
+  h1{font-family:'Unbounded',sans-serif;font-weight:700;font-size:1.5rem;margin-bottom:.5rem;text-align:center}
+  .sub{color:var(--muted);font-size:.9rem;text-align:center;margin-bottom:2rem;line-height:1.6}
+  label{font-size:.85rem;color:var(--muted);display:block;margin-bottom:.4rem}
+  input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s;margin-bottom:1.2rem}
+  input:focus{border-color:var(--accent)}
+  input::placeholder{color:var(--muted)}
+  .btn{width:100%;padding:1rem;border-radius:10px;font-weight:700;font-size:1rem;cursor:pointer;border:none;font-family:'Inter',sans-serif;background:var(--accent);color:#000;transition:opacity .2s}
+  .btn:hover{opacity:.85}
+  .alt{text-align:center;margin-top:1.5rem;color:var(--muted);font-size:.9rem}
+  .alt a{color:var(--accent);text-decoration:none}
+  .err{background:rgba(255,77,0,.1);border:1px solid rgba(255,77,0,.3);border-radius:8px;padding:.8rem 1rem;color:#ff6b6b;font-size:.85rem;margin-bottom:1rem;display:none}
+</style>
+</head>
+<body>
+<div class="box">
+  <a href="/" class="logo">Цени<span>BG</span></a>
+  <h1>Създай профил</h1>
+  <p class="sub">Безплатно. 5 продукта от момента на регистрацията. Без карта.</p>
+  <div class="err" id="err"></div>
+  <label>Имейл адрес</label>
+  <input type="email" id="email" placeholder="твоят@имейл.bg">
+  <label>Твоето име (незадължително)</label>
+  <input type="text" id="name" placeholder="Иван Иванов">
+  <button class="btn" onclick="reg()">Регистрирай се безплатно →</button>
+  <div class="alt">Вече имаш профил? <a href="/login">Влез</a></div>
+</div>
+<script>
+async function reg() {
+  const email = document.getElementById('email').value.trim();
+  const name = document.getElementById('name').value.trim();
+  const errEl = document.getElementById('err');
+  errEl.style.display = 'none';
+  if (!email || !email.includes('@')) { errEl.textContent='Моля въведи валиден имейл.'; errEl.style.display='block'; return; }
+  const r = await fetch('/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,name})});
+  const d = await r.json();
+  if (d.success) { window.location.href = d.redirect; }
+  else { errEl.textContent = d.error || 'Грешка'; errEl.style.display='block'; }
+}
+document.addEventListener('keydown', e => { if(e.key==='Enter') reg(); });
+</script>
+</body>
+</html>
